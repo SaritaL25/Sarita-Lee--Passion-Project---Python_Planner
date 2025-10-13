@@ -64,12 +64,14 @@ class Task :
                 print("Congrats you're done with {} !🎉".format(self.name))
                 speak("Congrats you're done with {} !".format(self.name))
 
-    listener = keyboard.Listener( on_release=lambda key :on_release(key),
-                             on_press= lambda key :on_press(key))
-    listener.start()
+    
 
     def Task_Timer(self):
-        
+        listener = keyboard.Listener( on_release=lambda key :on_release(key),
+                             on_press= lambda key :on_press(key))
+
+        listener.start()
+
         print("The timer ⏲️ has begun you have {} minute(s) on the clock!".format(self.duration))
         speak("The timer has begun you have {} minute(s) on the clock!".format(self.duration))
         print("NOW:{}".format(datetime.now()))
@@ -92,6 +94,9 @@ class Task :
         self.endTime=datetime.now()+timedelta(minutes=self.overdue)
         last_min_left=None 
         while(datetime.now()<self.endTime and not self.complete):
+            time.sleep(1)
+            if(self.complete):
+                break
             now=datetime.now()
             TimeLeft=(self.endTime-datetime.now()).total_seconds()/60
             minutes_left = int(TimeLeft)
@@ -104,9 +109,9 @@ class Task :
                  speak("WARNING : You have {:.1f} second(s) left, please MARK AS DONE by pressing the 'ctrl'+'d' key. If you're not done i'll move forward without you ...".format(minutes_left))
 
                 else:
-                    print("WARNING : You have {:.1f} second(s) ⏳ left, please MARK AS DONE by pressing the 'ctrl'+'d' key. " \
+                    print("WARNING : You have {:.1f} second(s) ⏳ left, please MARK AS DONE by pressing the 'ctrl'+'shift'+'d' key. " \
                 "If you're not done i'll move forward without you ...".format(seconds_left))
-                    speak("WARNING : You have {:.1f} second(s) left, please MARK AS DONE by pressing the 'ctrl'+'d' key. If you're not done i'll move forward without you ...".format(seconds_left))
+                    speak("WARNING : You have {:.1f} second(s) left, please MARK AS DONE by pressing the control + shift ey. If you're not done i'll move forward without you ...".format(seconds_left))
                 last_min_left=minutes_left
             time.sleep(1)
         play_alarm_sound()
@@ -234,9 +239,8 @@ while(Running_Main):#I want person to be able to remove tasks and edit the list 
             if(user_input in menu ):
                 menu[user_input]()
                 break
+    task_tracker+=1#increments the task so we move on 
     time.sleep(5)
-    if(current_user.todo_list[task_tracker].complete):
-        task_tracker+=1#increments the task so we move on 
     if(task_tracker==len(current_user.todo_list)):
         break
 Running_Main=False
