@@ -3,9 +3,17 @@ import time
 from pynput import keyboard
 import pygame 
 import os 
-
-
-    
+'''HOTKEY_COMBO = {keyboard.Key.ctrl, keyboard.Key.shift, keyboard.KeyCode(char='d')}
+pressed = set()
+def on_press(key):#tracks status of keys being pressed
+        pressed.add(key)       
+def on_release(key):# defines the funciton that happens upon release or when the user lifts up from any key they pressed
+        if key in HOTKEY_COMBO and pressed == HOTKEY_COMBO:
+            current_user.todo_list[task_tracker].mark_as_done()
+        pressed.discard(key)
+        if key==keyboard.Key.esc:
+            return False#stops the listener'''
+#____________INITIAL SETUP_____________
 def play_alarm_sound():
     pygame.mixer.init()
     pygame.mixer.music.load("/Users/saritasamuelalee/Documents/Sarita Lee--Passion Project - Python_Planner/Songs/iphone_alarm.mp3")
@@ -19,42 +27,47 @@ speak("Welcome to your daily planner ! Hope you're having a great day lets get s
 print("Loading...")
 time.sleep(5)
 #defining task class 
+
+#______________HOTKEYS+LISTENER______________
+HOTKEY_COMBO = {keyboard.Key.ctrl, keyboard.Key.shift, keyboard.KeyCode(char='d')}
+pressed = set()
+def on_press(key):#tracks status of keys being pressed
+        pressed.add(key)       
+def on_release(key):# defines the funciton that happens upon release or when the user lifts up from any key they pressed
+        if key in HOTKEY_COMBO and pressed == HOTKEY_COMBO:
+            current_user.todo_list[task_tracker].mark_as_done()
+        pressed.discard(key)
+        if key==keyboard.Key.esc:
+            return False#stops the listener
+
+#____________CLASSES_____________
+#defines task class
 class Task :
     def __init__(self,name="", duration=0):
         self.name=name
         self.duration=duration
         self.complete=False
     def Begin_Task(self):
-        print("Whenever you are done PRESS the \033[1m'cmd/ctrl'+'d'\033[0m key")
+        print("Whenever you are done PRESS the \033[1m'ctrl'+'shft'+'d'\033[0m keys")
         print("Your next task is :{} " \
     "You have {} minute(s) to complete this task " \
     "TURN OFF ALL DISTRACTIONS you have 10 seconds to do so".format(self.name,self.duration))
-        speak("Whenever you are done PRESS the 'cmd/ctrl'+'d' key Your next task is :{} You have {} minute(s) to complete this task TURN OFF ALL DISTRACTIONS you have 10 seconds to do so".format(self.name,self.duration))
+        speak("Whenever you are done PRESS and BRIEFLY HOLD the  control+ shift + d keys Your next task is :{} You have {} minute(s) to complete this task TURN OFF ALL DISTRACTIONS you have 10 seconds to do so".format(self.name,self.duration))
         time.sleep(10)
         self.startTime= datetime.now()#gets current time
         self.endTime=self.startTime+timedelta(minutes=self.duration)#calcualtes the end time ,i checked this works pretty well
         self.has_extended=False#initializes extension to false, you don't want to give them 5 minutes right away, when time is up they must indicate so 
         self.Task_Timer()#begins the next function 
     def mark_as_done(self):
-            if(not self.complete):
+        if(not self.complete):
                 self.complete=True
                 print("Congrats you're done with {} !🎉".format(self.name))
-    
-    '''def for_canonical(f):
-        return lambda kou: f(keyboard.Listener.canonical(k))'''
-#this function begins the internal timer for each individual task
-    '''def start_done_listener(self):
-        done_indicator = keyboard.HotKey(keyboard.HotKey.parse('<ctrl>+d'), self.mark_as_done)
-        listener = keyboard.Listener(
-            on_press=Task.for_canonical(done_indicator.press),
-            on_release=Task.for_canonical(done_indicator.release))
-        listener.start()'''
-    def on_release(key):# defines the funciton that happens upon release or when the user lifts up from any key they pressed
-   # defines the funciton that happens upon release or when the user lifts up from any key they pressed
-        hotkey = keyboard.GlobalHotKeys({ '<ctrl>+<shift>+d':current_user.todo_list[task_tracker].mark_as_done()})
-        hotkey.start()
-    l = keyboard.Listener(on_release=on_release)
-    l.start()
+                speak("Congrats you're done with {} !".format(self.name))
+
+    listener = keyboard.Listener( on_release=lambda key :on_release(key),
+                             on_press= lambda key :on_press(key))
+    listener.start()
+
     def Task_Timer(self):
         
         print("The timer ⏲️ has begun you have {} minute(s) on the clock!".format(self.duration))
@@ -64,6 +77,7 @@ class Task :
         while(not self.complete):
             if(datetime.now()>=self.endTime and not self.has_extended):
                 print("Would you like to add 5 more minutes to wrap up?(y/n)")
+                speak("Would you like to add 5 more minutes to wrap up?")
                 user_input= input().strip().lower()
                 if(user_input=="y"):
                     self.endTime= datetime.now()+timedelta(minutes=5)#adds 5 minutes
@@ -106,7 +120,9 @@ class Task :
         # advance to the next task on the list and prompt them to continue throughout the 10 minute grace period 
         # for example : it will print "You are "+str(datetime.now()-self.endtime)+" minute(s) overdue PLEASE MARK AS DONE IF DONE IF NOT JUST MOVE ON and mark done"
         return self.complete
+    
     #define user class
+
 class User:
     def __init__(self,name):#each user has a name, todo list, and a boolean that tells us if the list was already set up
         self.name=name
@@ -150,16 +166,17 @@ class User:
         if(task.complete):
                 num_complete+=1
         return avg_time, num_complete,len(self.todo_list)
-        
 
 #____________MAIN METHOD_____________
 #how do i indicate that this is the main method without a comment ? to make it clear to other programmers
+
 
 def break_timer():
     print("How long would you like your break to be?(enter the letter)" \
     "a) 5 Minutes" \
     "b) 10 Minutes" \
-    "c) 15 Minutes")
+    "c) 15 Minutes"
+    "d) Custom")
     user_input= input()
     if(user_input=='a'):
         sleepTimer=5
@@ -167,6 +184,9 @@ def break_timer():
         sleepTimer=10
     if(user_input=='c'):
         sleepTimer=15
+    if(user_input=='d'):
+        print("Enter custom time in minutes")
+        sleepTimer=int(input())
     print("Enjoy your {} minute break...".format(sleepTimer))
     print(" ☀️ Break in Progress 🏖️")
     speak("Enjoy your {} minute break...Break in Progress".format(sleepTimer))
@@ -183,7 +203,6 @@ print("Hello,"+current_user.name+" lets set up your to-do list!")
 current_user.ToDo_setUp()
 Running_Main=True
 task_tracker=0
-
 
 menu={1:current_user.todo_list[task_tracker].Begin_Task,2:current_user.Edit_List,3:break_timer}
 menu_label={1:'Start Task',2:'Edit To-Do List',3:'Take a Break'}
@@ -220,18 +239,21 @@ while(Running_Main):#I want person to be able to remove tasks and edit the list 
         task_tracker+=1#increments the task so we move on 
     if(task_tracker==len(current_user.todo_list)):
         break
-
+Running_Main=False
+print("You've completed all your tasks for the day !")
+speak("You've completed all your tasks for the day !")
 time.sleep(5)
 pygame.mixer.music.stop()
 my_summary= current_user.summary()
 speak("Congrats you've made it through the whole list...Here's a breif summary of what we've done today: Average time spent on each task: {} Number of Tasks Completed: {}  Number of Total Tasks: {} Great work ! See ya real soon ! ".format(*my_summary))#the symbol * unpacks the tuple returned
 Time_spent,num_complete,num_tasks=current_user.summary()
 print("Congrats you've made it through the whole list..." \
-"Here's a breif summary of what we've done today:" \
-"Average time spent on each task: {}" \
-"Number of Tasks Completed: {}" \
-"Number of Total Tasks: {}" \
+"Here's a breif summary of what we've done today:"\
+"Average time spent on each task: {}"\
+"Number of Tasks Completed: {}"\
+"Number of Total Tasks: {}"\
 "Great work ! See ya real soon ! ".format(Time_spent,num_complete,num_tasks))#the symbol * unpacks the tuple returned
+speak("Congrats you've made it through the whole list...Here's a breif summary of what we've done today: Average time spent on each task: {} Number of Tasks Completed: {}  Number of Total Tasks: {} Great work ! See ya real soon ! ".format(*my_summary))#the symbol * unpacks the tuple returned
 #play the hotdog mickey mouse song
 
 
